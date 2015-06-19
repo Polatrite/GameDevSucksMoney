@@ -114,9 +114,7 @@ app.controller("MainCtrl", ['$scope', '$interval', '$timeout', function(scope, $
   
   	boostDevelopmentSpeed: function() {
   		var cost = scope.curProject.speedCost;
-  		if(scope.curDollar < cost) {
-  		  return false;
-  		}
+  	  if(scope.curDollar < cost) { return false; }
   		
       var msg = "You spent $" + cost + " to speed up development time, it ";
   		var max = Math.floor(scope.curProject.max / 10);
@@ -168,6 +166,7 @@ app.controller("MainCtrl", ['$scope', '$interval', '$timeout', function(scope, $
   	
   	boostAwareness: function(game){
   	  var cost = Math.round(game.releaseInvestment/5 + (game.investment - game.releaseInvestment)/10);
+  	  if(scope.curDollar < cost) { return false; }
   		scope.curDollar -= cost;
   		game.investment += cost;
   		game.awareness += randInt(10, 40)/100 + game.awareness/10;
@@ -282,7 +281,7 @@ app.controller("MainCtrl", ['$scope', '$interval', '$timeout', function(scope, $
   				scope.curDollar += initialSales;
   				
   				scope.games.push(game);
-  				scope.log.unshift("Your " + scope.curProject.tier.name + ", " + scope.curProject.name + "  performed " + performance + ", it made $" + initialSales);
+  				scope.log.unshift("Your " + scope.curProject.tier.name + ", " + scope.curProject.name + "  performed " + performance + ", it made $" + initialSales + " and had a quality of " + game.quality + ".");
   				scope.curProject = null;
   
   			}
@@ -299,7 +298,6 @@ app.controller("MainCtrl", ['$scope', '$interval', '$timeout', function(scope, $
   					game.recurringSales += recurringsale;
   
             var value = randDec(0.005,0.015) * (1.7-game.awareness); // lose more awareness once your popularity starts to fall off
-            console.log("Losing " + value + " awareness with " + (1.7-game.awareness) + " penalty");
   					game.awareness -= value;
   
   					if (game.awareness < 0) {
