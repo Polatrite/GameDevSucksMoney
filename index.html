@@ -2,7 +2,7 @@
 <html lang="en" ng-app="app">
 <head>
   <meta charset="UTF-8">
-  <title>Game Dev Sucks Money</title>
+  <title>Magnate: Game Dev</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/foundation/5.5.0/css/foundation.css">
@@ -11,8 +11,8 @@
 </head>
 <body ng-controller="MainCtrl">
   <div>
-    <h2>Game Development Sucks Money</h2>
-    <h4>A minigame by <a href="http://www.reddit.com/u/dSolver" target="_blank">dSolver</a></h4>
+    <h2>Magnate: Game Dev</h2>
+    <h4>A game by <a href="http://www.reddit.com/u/Polatrite" target="_blank">Polatrite</a> based on a minigame by <a href="http://www.reddit.com/u/dSolver" target="_blank">dSolver</a></h4>
 
     <div ng-hide="started">
       <h4>Starting Conditions</h4>
@@ -44,14 +44,15 @@
     
     <div ng-show="started">
       <div>
-        <h4 ng-class="{negative:curDollar < 0}">Money: {{curDollar | currency}}</h4>
-        <button ng-click="changeGameSpeed(0);" ng-show="timer.gameSpeed > 0">Pause</button>
+        <h4 ng-class="{negative:curDollar < 0}">Money: {{curDollar | currency}} - Day {{timer.gameDay}}</h4>
+        <button ng-click="changeGameSpeed(0);" ng-show="timer.gameSpeed !== 0">Pause</button>
         <button ng-click="changeGameSpeed(1);" ng-show="timer.gameSpeed !== 1">1x</button>
         <button ng-click="changeGameSpeed(2);" ng-show="timer.gameSpeed !== 2">2x</button>
         <button ng-click="changeGameSpeed(4);" ng-show="timer.gameSpeed !== 4">4x</button>
+        <button ng-click="changeGameSpeed(8);" ng-show="timer.gameSpeed !== 8">8x</button>
       </div>
       <div ng-hide="requestName">
-        <button ng-repeat="tier in tiers" ng-click="makeGame(tier)" ng-disabled="curProject || curDollar < tier.cost*0.1"> Make {{tier.name}} (${{tier.cost}}) </button>
+        <button ng-repeat="tier in tiers" ng-click="makeGame(tier)" ng-disabled="curProject || curDollar < tier.cost*0.1"> Make {{tier.name}} ({{tier.cost | currency}}) </button>
       </div>
       <div ng-show="requestName">
         <label>Name your game:</label>
@@ -66,9 +67,9 @@
       </div>
 
       <div ng-show="curProject">
-        <button ng-click="boostDevelopmentSpeed()">Throw ${{curProject.speedCost}} at speed</button>
-        <button ng-click="boostReleaseQuality()">Throw ${{curProject.qualityCost}} at quality</button>
-        <button ng-click="boostReleaseAwareness()">Generate hype! ${{curProject.advertisingCost}}</button>
+        <button ng-click="boostReleaseQuality()">Spend {{curProject.qualityCost | currency}} on quality</button>
+        <button ng-click="boostReleaseAwareness()">Generate hype! {{curProject.advertisingCost | currency}}</button>
+        <button ng-click="boostDevelopmentSpeed()">Throw {{curProject.speedCost | currency}} at speed</button>
       </div>
       <div class="bottom">
         <div>
@@ -83,7 +84,10 @@
             Initial investment: {{game.releaseInvestment | currency}} <br>
             Total sales: {{game.recurringSales + game.sales | currency}} <br>
             Total investment: {{game.investment | currency}} <br>
+            <span ng-class="{negative:game.revenue < 0}">Revenue: {{game.revenue | currency}} </span><br>
+            <div jq-sparkline ng-model="game.heuristics.profitPercent" opts="{{ {width: '100px', height: '30px', chartRangeMin: '0', chartRangeMax: '1'} }}" ng-class="{'not-profitable': game.revenue < 0}" style="margin: 0px; background-color: #89E894; width: 100px;"></div><br>
             Consumer Awareness: {{game.awareness * 100 | number:0}}% <br>
+            <div jq-sparkline ng-model="game.heuristics.awareness" opts="{{ {width: '100px', height: '30px', chartRangeMin: '0', chartRangeMax: '1'} }}" style="margin: 0px; background-color: #89E894; width: 100px;"></div><br>
             <button ng-click="boostAwareness(game)">Ad Campaign (${{game.investment/5 | number:0}})</button>
           </div>
         </div>
@@ -120,6 +124,9 @@
   <script src='https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.14/angular.min.js'></script>
   <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js'></script>
   <script src='https://blockchain.info//Resources/wallet/pay-now-button.js'></script>
+  <script src='underscore.js'></script>
+  <script src='jquery-sparkline.js'></script>
+  
 
   <script src="js/index.js"></script>
 </body>

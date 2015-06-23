@@ -2,6 +2,7 @@ var app = angular.module('app', []);
 
 app.controller("MainCtrl", ['$scope', '$interval', '$timeout', function(scope, $interval, $timeout) {
   angular.extend(scope, {
+  	heuristics: {},
     curDollar: 1000,
     roi: 0.8,
     variance: 0.7,
@@ -53,10 +54,13 @@ app.controller("MainCtrl", ['$scope', '$interval', '$timeout', function(scope, $
   	],
     tiers: [],
     timer: {
+      gameDay: 1,
   	  gameSpeed: 1,
   	  gameSpeedCounter: 0,
   	  awarenessMax: 10,
   	  awarenessCounter: 0,
+  	  gameDayMax: 30,
+  	  gameDayCounter: 0,
   	  progressMax: 1,
   	  progressCounter: 0
   	},
@@ -100,7 +104,7 @@ app.controller("MainCtrl", ['$scope', '$interval', '$timeout', function(scope, $
   			investmentReturn: scope.curTier.cost,
   			progress: 0,
   			max: scope.curTier.time,
-  			quality: 0.70,
+  			quality: 0.67,
   			releaseAwareness: scope.curTier.initialAwareness,
   			advertisingCost: scope.curTier.cost * 0.17,
   			qualityCost: scope.curTier.cost * 0.20,
@@ -131,9 +135,9 @@ app.controller("MainCtrl", ['$scope', '$interval', '$timeout', function(scope, $
   		result = Math.round(result / scope.curProject.max * 100);
   		msg += " (" + result + "%)";
   		scope.curDollar -= cost
-  		scope.curProject.speedCost += Math.round(cost * 0.20);
+  		scope.curProject.speedCost += Math.round(cost * 0.05);
   		scope.curProject.investment += cost;
-  		scope.curProject.investmentReturn += cost/2; // managers trying to speed up development isn't as worthwhile
+  		scope.curProject.investmentReturn += cost/4; // managers trying to speed up development isn't as worthwhile
   		scope.log.unshift(msg);
   	},
   	
@@ -155,10 +159,10 @@ app.controller("MainCtrl", ['$scope', '$interval', '$timeout', function(scope, $
   	  var cost = scope.curProject.qualityCost;
   	  if(scope.curDollar < cost) { return false; }
   	  scope.curDollar -= cost;
-  		scope.curProject.qualityCost += Math.round(cost * 0.30);
+  		scope.curProject.qualityCost += Math.round(cost * 0.40);
   		scope.curProject.investment += cost;
-  		scope.curProject.investmentReturn += cost;
-  	  var value = randDec(0, 0.15);
+  		scope.curProject.investmentReturn += cost*3/4;
+  	  var value = randDec(0.02, 0.12);
   	  scope.curProject.quality += value;
   	  console.log("Quality improved by " + value + " to " + scope.curProject.quality);
   	  scope.log.unshift("You spent $" + cost + " on improving quality.");
@@ -194,7 +198,7 @@ app.controller("MainCtrl", ['$scope', '$interval', '$timeout', function(scope, $
   
   		}
   	},
-  
+  	
   	getReleaseProjectPerformance: function(initialSales, investment, quality) {
   		var ratio = initialSales / investment * quality;
   		
@@ -208,7 +212,7 @@ app.controller("MainCtrl", ['$scope', '$interval', '$timeout', function(scope, $
   		];
   		
   		var performance;
-  		if (ratio < 0.5) {
+  		if (ratio < 0.5) {//
   			performance = performances[0];
   		} else if (ratio < 0.75) {
   			performance = performances[1];
@@ -224,6 +228,37 @@ app.controller("MainCtrl", ['$scope', '$interval', '$timeout', function(scope, $
   		return performance;
   	},
   	
+  	/*logHeuristics: function(parent, nested) {
+  	  if(!nested) nested = 1;
+  	  if(nested > 3) return;
+		  for(var prop in parent) {
+		    if(scope.hasOwnProperty(prop)) {
+		      var value = parent[prop];
+		      if(typeof value === 'number') {
+		        console.log(prop + ": " + value);
+		      }
+		      else if(typeof value === 'object') {
+		        scope.logHeuristics(value, nested+1);
+		      }
+		    }
+		  }
+  	  
+  	},*/
+  	
+  	storeVariableHeuristics: function(object, name, value, length) {
+  		if(object.heuristics === undefined) {
+  			object.heuristics = {};
+  		}
+  		if(object.heuristics[name] === undefined) {
+  			object.heuristics[name] = [];
+  		}
+  		
+  		object.heuristics[name].push(value);
+  		if(object.heuristics[name].length > length) {
+  			object.heuristics[name].shift();
+  		}
+  	},
+
   	gameTick: function() {
   	  scope.timer.gameSpeedCounter += scope.timer.gameSpeed;
   	  while(scope.timer.gameSpeedCounter >= 1) {
@@ -239,6 +274,12 @@ app.controller("MainCtrl", ['$scope', '$interval', '$timeout', function(scope, $
     		while(scope.timer.awarenessCounter >= scope.timer.awarenessMax) {
     		  scope.timer.awarenessCounter -= scope.timer.awarenessMax;
     		  scope.tickGameAwareness();
+    		}
+    
+    		scope.timer.gameDayCounter++;
+    		while(scope.timer.gameDayCounter >= scope.timer.gameDayMax) {
+    		  scope.timer.gameDayCounter -= scope.timer.gameDayMax;
+    		  scope.tickGameDay();
     		}
     
     		var oldDollar = scope.curDollar;
@@ -275,7 +316,9 @@ app.controller("MainCtrl", ['$scope', '$interval', '$timeout', function(scope, $
   					releaseInvestment: scope.curProject.investment,
   					releaseSales: initialSales,
   					releaseAwareness: initialAwareness,
-  					releasePerformance: performance
+  					releasePerformance: performance,
+  					releaseDate: scope.timer.gameDay,
+  					idleDayCounter: 0
   				};
   				
   				scope.curDollar += initialSales;
@@ -296,6 +339,8 @@ app.controller("MainCtrl", ['$scope', '$interval', '$timeout', function(scope, $
   
   					scope.curDollar += recurringsale;
   					game.recurringSales += recurringsale;
+  					game.sales += recurringsale;
+  					game.revenue = game.sales - game.investment;
   
             var value = randDec(0.005,0.015) * (1.7-game.awareness); // lose more awareness once your popularity starts to fall off
   					game.awareness -= value;
@@ -310,15 +355,52 @@ app.controller("MainCtrl", ['$scope', '$interval', '$timeout', function(scope, $
   				    game.awareness += randDec(0.005,0.015);
   				  }
   				}
+  				
+  				if(game.awareness <= 0.05) {
+  				  game.idleDayCounter += 1;
+  				  if(game.idleDayCounter >= 400) {
+  				    scope.log.unshift(game.name + " has gone off the market after $" + curr(game.recurringSales) + " in sales and a profit of $" + curr(game.investment-game.recurringSales) + " over " + (scope.timer.gameDay-game.releaseDate) + " days.");
+  				    removeElement(scope.games, game);
+  				  }
+
+  				}
   			});
   		}
-  	}
+  	},
+  	
+    tickGameDay: function() {
+		  scope.timer.gameDay += 1;
+		  
+		  scope.initializeTiers();
+		  
+		  _.each(scope.games, function(game) {
+		  	scope.storeVariableHeuristics(game, 'recurringSales', game.recurringSales, 100);
+		  	scope.storeVariableHeuristics(game, 'awareness', game.awareness, 100);
+		  	scope.storeVariableHeuristics(game, 'revenue', game.revenue, 100);
+		  	scope.storeVariableHeuristics(game, 'profitPercent', game.recurringSales/game.investment, 100);
+		  });
+    }
 
   });
+  
 
 	scope.initializeTiers();
 	scope.start();
 	$interval(scope.gameTick, 100);
+	
+	function curr(value) {
+	  return Number(value.toFixed(2));
+	}
+	
+	function round(value) {
+	  return Math.round(value);
+	}
+	
+	function removeElement(arr, elem) {
+	  var index = arr.indexOf(elem);
+	  arr.splice(index, 1);
+	  return arr;
+	}
 	
 	function randInt(min, max) {
 	  if(!min) min = 0;
@@ -340,3 +422,47 @@ app.filter('reverse', function() {
     return items.slice().reverse();
   };
 });
+
+
+// Requires jQuery from http://jquery.com/
+// and jQuerySparklines from http://omnipotent.net/jquery.sparkline
+ 
+// AngularJS directives for jquery sparkline
+app.directive('jqSparkline', [function () {
+    'use strict';
+    return {
+        restrict: 'AE',
+        require: 'ngModel',
+        link: function (scope, elem, attrs, ngModel) {
+
+            var opts={};
+             //TODO: Use $eval to get the object
+            opts.type = attrs.type || 'line';
+
+            scope.$watchCollection(attrs.ngModel, function () {
+              render();
+            }, true);
+            
+            scope.$watch(attrs.opts, function(){
+              render();
+            });
+            
+            var render = function () {
+                var model;
+                if(attrs.opts) 
+                	angular.extend(opts, angular.fromJson(attrs.opts));
+
+                // Trim trailing comma if we are a string
+                angular.isString(ngModel.$viewValue) ? model = ngModel.$viewValue.replace(/(^,)|(,$)/g, "") : model = ngModel.$viewValue;
+                
+                var data;
+                if(model === undefined) {
+                	return;
+                }
+                // Make sure we have an array of numbers
+                angular.isArray(model) ? data = model : data = model.split(',');
+                $(elem).sparkline(data, opts);
+            };
+        }
+    }
+}]);
