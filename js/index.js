@@ -154,7 +154,11 @@ app.controller("MainCtrl", ['$scope', '$interval', '$timeout', function(scope, $
   	  scope.curProject.releaseAwareness += value;
   	  scope.curProject.releaseAwareness = Math.min(scope.curProject.releaseAwareness, 1);
   	  console.log("Awareness improved by " + value + " to " + scope.curProject.releaseAwareness);
-  	  scope.log.unshift("You spent $" + cost + " on pre-release advertising. " + scope.getBoostEffectiveness(value, min, max, "hype"));
+  	  var message = "You spent $" + cost + " on pre-release advertising. " + scope.getBoostEffectiveness(value, min, max, "hype").message;
+  	  if(scope.curProject.releaseAwareness >= 1) {
+  	    message += " Audiences are clamoring for " + scope.curProject.name + "!";
+  	  }
+  	  scope.log.unshift(message);
   	},
   	
   	boostReleaseQuality: function() {
@@ -169,7 +173,7 @@ app.controller("MainCtrl", ['$scope', '$interval', '$timeout', function(scope, $
   	  var value = randDec(min, max);
   	  scope.curProject.quality += value;
   	  console.log("Quality improved by " + value + " to " + scope.curProject.quality);
-  	  scope.log.unshift("You spent $" + cost + " on improving quality. " + scope.getBoostEffectiveness(value, min, max, "quality"));
+  	  scope.log.unshift("You spent $" + cost + " on improving quality. " + scope.getBoostEffectiveness(value, min, max, "quality").message);
   	},
   	
   	boostAwareness: function(game){
@@ -242,7 +246,7 @@ app.controller("MainCtrl", ['$scope', '$interval', '$timeout', function(scope, $
   		
   		console.log("Ratio on (" + value + "," + min +"," + max + ") was " + ratio);
   		
-  		return performance;
+  		return {ratio: ratio, message: performance};
   	},
   	
   	getReleaseProjectPerformance: function(initialSales, investment, quality) {
