@@ -148,11 +148,13 @@ app.controller("MainCtrl", ['$scope', '$interval', '$timeout', function(scope, $
   		scope.curProject.advertisingCost += Math.round(cost * 0.40);
   		scope.curProject.investment += cost;
   		scope.curProject.investmentReturn += 0;
-  	  var value = randDec(0.1,0.4);
+  		var min = 0.1;
+  		var max = 0.4;
+  	  var value = randDec(min, max);
   	  scope.curProject.releaseAwareness += value;
   	  scope.curProject.releaseAwareness = Math.min(scope.curProject.releaseAwareness, 1);
   	  console.log("Awareness improved by " + value + " to " + scope.curProject.releaseAwareness);
-  	  scope.log.unshift("You spent $" + cost + " on pre-release advertising.");
+  	  scope.log.unshift("You spent $" + cost + " on pre-release advertising. " + scope.getBoostEffectiveness(value, min, max, "hype"));
   	},
   	
   	boostReleaseQuality: function() {
@@ -162,10 +164,12 @@ app.controller("MainCtrl", ['$scope', '$interval', '$timeout', function(scope, $
   		scope.curProject.qualityCost += Math.round(cost * 0.40);
   		scope.curProject.investment += cost;
   		scope.curProject.investmentReturn += cost*3/4;
-  	  var value = randDec(0.02, 0.12);
+  		var min = 0.02;
+  		var max = 0.12;
+  	  var value = randDec(min, max);
   	  scope.curProject.quality += value;
   	  console.log("Quality improved by " + value + " to " + scope.curProject.quality);
-  	  scope.log.unshift("You spent $" + cost + " on improving quality.");
+  	  scope.log.unshift("You spent $" + cost + " on improving quality. " + scope.getBoostEffectiveness(value, min, max, "quality"));
   	},
   	
   	boostAwareness: function(game){
@@ -199,6 +203,48 @@ app.controller("MainCtrl", ['$scope', '$interval', '$timeout', function(scope, $
   		}
   	},
   	
+  	getBoostEffectiveness: function(value, min, max, type) {
+  		var ratio = (value - min) / max;
+  		
+  		var performance = [];
+  		
+  		if(type == "quality") {
+    		performances = [
+    				"The effort went quite poorly. (+    )",
+    				"It was not very effective. (++   )",
+    				"It yielded an average increase. (+++  )",
+    				"The effect was positive. (++++ )",
+    				"It's super effective! (+++++)"
+    		];
+  		}
+  		if(type == "hype") {
+    		performances = [
+    				"It put people to sleep. (+    )",
+    				"It was pretty boring. (++   )",
+    				"It didn't have much effect. (+++  )",
+    				"It excited audiences! (++++ )",
+    				"It created rabid fanboys! (+++++)"
+    		];
+  		}
+  		
+  		var performance;
+  		if (ratio < 0.2) {
+  			performance = performances[0];
+  		} else if (ratio < 0.4) {
+  			performance = performances[1];
+  		} else if (ratio < 0.6) {
+  			performance = performances[2];
+  		} else if (ratio < 0.8) {
+  			performance = performances[3];
+  		} else {
+  			performance = performances[4];
+  		}
+  		
+  		console.log("Ratio on (" + value + "," + min +"," + max + ") was " + ratio);
+  		
+  		return performance;
+  	},
+  	
   	getReleaseProjectPerformance: function(initialSales, investment, quality) {
   		var ratio = initialSales / investment * quality;
   		
@@ -212,7 +258,7 @@ app.controller("MainCtrl", ['$scope', '$interval', '$timeout', function(scope, $
   		];
   		
   		var performance;
-  		if (ratio < 0.5) {//
+  		if (ratio < 0.5) {
   			performance = performances[0];
   		} else if (ratio < 0.75) {
   			performance = performances[1];

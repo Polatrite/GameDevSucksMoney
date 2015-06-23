@@ -82,7 +82,7 @@
             Quality: {{game.quality}} <br>
             Initial sales: {{game.releaseSales | currency}} <br>
             Initial investment: {{game.releaseInvestment | currency}} <br>
-            Total sales: {{game.recurringSales + game.sales | currency}} <br>
+            Total sales: {{game.sales | currency}} <br>
             Total investment: {{game.investment | currency}} <br>
             <span ng-class="{negative:game.revenue < 0}">Revenue: {{game.revenue | currency}} </span><br>
             <div jq-sparkline ng-model="game.heuristics.profitPercent" opts="{{ {width: '100px', height: '30px', chartRangeMin: '0', chartRangeMax: '1'} }}" ng-class="{'not-profitable': game.revenue < 0}" style="margin: 0px; background-color: #89E894; width: 100px;"></div><br>
