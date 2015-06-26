@@ -85,7 +85,7 @@ app.controller("MainCtrl", ['$scope', '$interval', '$timeout', function(scope, $
   		scope.curDollar -= tier.cost;
   
   		scope.requestName = true;
-  		scope.name = "";
+  		scope.name = generateRandomName();
   		scope.curTier = tier;
   	},
   	
@@ -98,7 +98,7 @@ app.controller("MainCtrl", ['$scope', '$interval', '$timeout', function(scope, $
   	startProject: function() {
   		scope.requestName = false;
   		scope.curProject = {
-  			name: scope.name,
+  			name: scope.name != "" ? scope.name : generateRandomName(),
   			tier: scope.curTier,
   			investment: scope.curTier.cost,
   			investmentReturn: scope.curTier.cost,
@@ -148,8 +148,8 @@ app.controller("MainCtrl", ['$scope', '$interval', '$timeout', function(scope, $
   		scope.curProject.advertisingCost += Math.round(cost * 0.40);
   		scope.curProject.investment += cost;
   		scope.curProject.investmentReturn += 0;
-  		var min = 0.1;
-  		var max = 0.4;
+  		var min = 0.0;
+  		var max = 0.5;
   	  var value = randDec(min, max);
   	  scope.curProject.releaseAwareness += value;
   	  scope.curProject.releaseAwareness = Math.min(scope.curProject.releaseAwareness, 1);
@@ -225,7 +225,7 @@ app.controller("MainCtrl", ['$scope', '$interval', '$timeout', function(scope, $
     		performances = [
     				"It put people to sleep. (+    )",
     				"It was pretty boring. (++   )",
-    				"It didn't have much effect. (+++  )",
+    				"It went okay. (+++  )",
     				"It excited audiences! (++++ )",
     				"It created rabid fanboys! (+++++)"
     		];
@@ -244,7 +244,7 @@ app.controller("MainCtrl", ['$scope', '$interval', '$timeout', function(scope, $
   			performance = performances[4];
   		}
   		
-  		console.log("Ratio on (" + value + "," + min +"," + max + ") was " + ratio);
+  		//console.log("Ratio on (" + value + "," + min +"," + max + ") was " + ratio);
   		
   		return {ratio: ratio, message: performance};
   	},
@@ -347,8 +347,9 @@ app.controller("MainCtrl", ['$scope', '$interval', '$timeout', function(scope, $
   			scope.curProject.progress += 0.1;
   			if (scope.curProject.progress >= scope.curProject.max) {
   				var investmentReturn = scope.curProject.investmentReturn;
-  				var quality = scope.curProject.quality * (1 - scope.variance) + Math.random() * scope.curProject.quality * ((scope.variance) * 2);
-  				console.log("Game quality is " + quality);
+  				var quality = randDec(scope.curProject.quality * (1 - scope.variance), scope.curProject.quality);
+  				//var quality = scope.curProject.quality * (1 - scope.variance) + Math.random() * scope.curProject.quality * ((scope.variance) * 2);
+  				console.log("Game quality is " + quality + " from between " + (scope.curProject.quality * (1 - scope.variance)) + " and " + scope.curProject.quality);
   				var initialSales = investmentReturn * quality * scope.roi;
   				var performance = scope.getReleaseProjectPerformance(initialSales, investmentReturn, quality);
   				var initialAwareness = Math.min(1, scope.curProject.releaseAwareness * quality);
@@ -464,6 +465,38 @@ app.controller("MainCtrl", ['$scope', '$interval', '$timeout', function(scope, $
 	  return Math.random() * (max - min) + min;
 	}
 	
+	function generateRandomName() {
+	  var startWords = [];
+	  var middleWords = [];
+	  var endWords = [];
+	}
+	
+	function generateRandomName() {
+	  var startWords = ["Legend", "Ace", "Action", "Adventure", "After", "Air", "Airbourne", "Alien",
+  	  "Alone", "Amazing", "Archon", "Armor", "Age", "Aqua",
+  	  "Balance", "Bad", "Battle", "Bandit",
+  	  "Barbarian", "Below", "Big", "Bio", "Black", "Blind", "Blood", "Blue", "Bomb", "Bomber", "Border",
+  	  "Brain", "Bubble", "Burn",
+  	  "Campaign", "Captain", "Car", "Castle", "Catacomb", "Chaos", "Chrono",
+  	  "Civil", "Cloud", "Cold", "Command", "Cool", "Creature", "Cyber",
+  	  "Demon", "Daemon", "Dangerous", "Dark", "Defender", "Despair", "Die", "Death", "Dinosaur", "Donkey",
+  	  "Doom", "Down", "Dracula", "Dragon", "Dream", "Drug", "Duke", "Dungeon", 
+  	  "Echo", "Earth", "Eagle", "Elder", "Emergency", "Empire", "Encounter", "Executive", "Eye", 
+  	  "Falcon", "Fade", "Face", "Fantasy", "Final", "Fast", "Field", "Fire", "Fleet", "Flying", "Forgotten"
+  	  ];
+	  var middleWords = [];
+	  var endWords = ["Thunder", "Ball", "Puzzles", "Legions", "Viper", "Tentacle", "Death", "Descent", "Dungeon", "Dark", "Sun", "Moon", "Star", "Alien",
+	  	"Predator", "Tomorrow", "Today", "Vengeance", "Wake", "Rain", "Speed", "Blood", "Guts",
+	  	"Quest", "League", "Dragon", "Blade", "Sword", "Nodachi", "Simulator", "Fantasy", "Finale",
+	  	"Duck", "Hobbit", "Dwarf", "Emu"];
+
+	  var name = pick(startWords) + " " + pick(endWords);
+	  return name;
+	}
+
+	function pick(items) {
+		return items[Math.floor(Math.random()*items.length)];
+	}
 
 }]);
 
@@ -516,3 +549,17 @@ app.directive('jqSparkline', [function () {
         }
     }
 }]);
+
+app.directive('selectOnClick', function () {
+    return {
+        restrict: 'A',
+        link: function (scope, element, attrs) {
+            element.on('click', function () {
+                if (!window.getSelection().toString()) {
+                    // Required for mobile Safari
+                    this.setSelectionRange(0, this.value.length)
+                }
+            });
+        }
+    };
+});
